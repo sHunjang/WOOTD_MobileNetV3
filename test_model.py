@@ -1,5 +1,5 @@
 import tensorflow as tf
-from keras.applications import MobileNetV3Small
+from keras.applications import MobileNetV3Small, MobileNetV3Large
 from keras.models import Model
 from keras.preprocessing import image
 from keras.applications.mobilenet_v3 import preprocess_input
@@ -12,7 +12,7 @@ from PIL import Image
 
 # MobileNetV3 모델 로드 (최종 분류 레이어 제외)
 input_shape = (224, 224, 3)
-base_model = MobileNetV3Small(weights='imagenet', include_top=False, input_shape=input_shape, pooling='avg')
+base_model = MobileNetV3Large(weights='imagenet', include_top=False, input_shape=input_shape, pooling='avg')
 model = Model(inputs=base_model.input, outputs=base_model.output)
 
 def preprocess_image(img_path):
@@ -53,8 +53,8 @@ def plot_images_with_similarity(style_img_path, wardrobe_img_path, cos_sim, euc_
     plt.show()
 
 # 이미지 파일 경로 설정
-style_image_path = 'Wannabe_Combinations/Image_22.png'
-user_clothing_combination_path = 'Wannabe_Combinations/Image_22.png'
+style_image_path = 'Wannabe_Combinations/Wannabe.png'
+user_clothing_combination_path = 'test_Dir/All_Similar.png'
 
 # 예시 이미지의 특징 벡터 추출
 style_features = extract_features(style_image_path, model)
