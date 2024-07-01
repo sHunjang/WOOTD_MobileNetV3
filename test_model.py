@@ -12,7 +12,7 @@ from PIL import Image
 
 # MobileNetV3 모델 로드 (최종 분류 레이어 제외)
 input_shape = (224, 224, 3)
-base_model = MobileNetV3Large(weights='imagenet', include_top=False, input_shape=input_shape, pooling='avg')
+base_model = MobileNetV3Small(weights='imagenet', include_top=True, input_shape=input_shape, pooling='avg')
 model = Model(inputs=base_model.input, outputs=base_model.output)
 
 def preprocess_image(img_path):
@@ -36,7 +36,7 @@ def euclidean_distance_score(features1, features2):
 def pearson_correlation_score(features1, features2):
     return pearsonr(features1.flatten(), features2.flatten())[0]
 
-def plot_images_with_similarity(style_img_path, wardrobe_img_path, cos_sim, euc_dist, pearson_corr):
+def plot_images_with_similarity(style_img_path, wardrobe_img_path, cos_sim, euc_dist):
     style_img = Image.open(style_img_path)
     wardrobe_img = Image.open(wardrobe_img_path)
     
@@ -49,7 +49,7 @@ def plot_images_with_similarity(style_img_path, wardrobe_img_path, cos_sim, euc_
     ax[1].axis('off')
     ax[1].set_title('User Clothing Combination Image')
     
-    plt.suptitle(f'Cosine Similarity: {cos_sim:.2f} | Euclidean Distance: {euc_dist:.2f} | Pearson Correlation: {pearson_corr:.2f}')
+    plt.suptitle(f'Cosine Similarity: {cos_sim:.2f} | Euclidean Distance: {euc_dist:.2f}')
     plt.show()
 
 # 이미지 파일 경로 설정
@@ -63,7 +63,7 @@ wardrobe_features = extract_features(user_clothing_combination_path, model)
 # 유사도 측정
 cos_sim = cosine_similarity_score(style_features, wardrobe_features)
 euc_dist = euclidean_distance_score(style_features, wardrobe_features)
-pearson_corr = pearson_correlation_score(style_features, wardrobe_features)
+
 
 # 이미지와 유사도 점수 시각화
-plot_images_with_similarity(style_image_path, user_clothing_combination_path, cos_sim, euc_dist, pearson_corr)
+plot_images_with_similarity(style_image_path, user_clothing_combination_path, cos_sim, euc_dist)
