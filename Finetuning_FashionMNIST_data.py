@@ -3,7 +3,7 @@ from keras.datasets import fashion_mnist
 from keras.applications import MobileNetV3Small
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from keras.models import Model
-from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.optimizers import Adam
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # 하이퍼파라미터
 batch_size = 64
 epochs_initial = 20
-epochs_finetune = 20
+epochs_finetune = 30
 learning_rate_initial = 1e-4
 learning_rate_finetune = 1e-5
 
@@ -38,7 +38,7 @@ model = Model(inputs=base_model.input, outputs=predictions)
 model.compile(optimizer=Adam(learning_rate=learning_rate_initial), loss='categorical_crossentropy', metrics=['accuracy'])
 
 # 학습률 찾기 콜백
-def find_learning_rate(model, data, start_lr=1e-6, end_lr=1e-1, epochs=25):
+def find_learning_rate(model, data, start_lr=1e-6, end_lr=1e-1, epochs=20):
     K = tf.keras.backend
     
     class LRFinder(tf.keras.callbacks.Callback):
@@ -83,21 +83,20 @@ def find_learning_rate(model, data, start_lr=1e-6, end_lr=1e-1, epochs=25):
     model.fit(data[0], data[1], batch_size=batch_size, callbacks=[callback], epochs=epochs)
 
 # 콜백 설정
-checkpoint = ModelCheckpoint('best_model.h5', save_best_only=True, monitor='val_accuracy', mode='max')
-early_stop = EarlyStopping(monitor='val_accuracy', patience=3, restore_best_weights=True)
+checkpoint = ModelCheckpoint('best_model.h5', save_best_only=True, monitor='val_loss', mode='min')
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=1e-6, verbose=1)
 
 # 학습률 찾기 실행
 find_learning_rate(model, (x_train, y_train))
 
 # 모델 학습
-model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs_initial, validation_data=(x_test, y_test), callbacks=[checkpoint, early_stop])
+model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs_initial, validation_data=(x_test, y_test), callbacks=[checkpoint, reduce_lr])
 
 # 미세 조정
 for layer in base_model.layers:
     layer.trainable = True
 model.compile(optimizer=Adam(learning_rate=learning_rate_finetune), loss='categorical_crossentropy', metrics=['accuracy'])
-model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs_finetune, validation_data=(x_test, y_test), callbacks=[checkpoint, early_stop, reduce_lr])
+model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs_finetune, validation_data=(x_test, y_test), callbacks=[checkpoint, reduce_lr])
 
 # 모델 저장
 model.save('Fashion_MNIST_MobileNetV3Small_final.h5')
